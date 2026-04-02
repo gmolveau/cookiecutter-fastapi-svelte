@@ -1,0 +1,117 @@
+{
+  "clients": [
+    {
+      "clientId": "the-app",
+      "directAccessGrantsEnabled": true,
+      "protocol": "openid-connect",
+      "protocolMappers": [
+        {
+          "config": {
+            "access.token.claim": "true",
+            "claim.name": "groups",
+            "full.path": "false",
+            "id.token.claim": "true",
+            "userinfo.token.claim": "true"
+          },
+          "consentRequired": false,
+          "name": "groups",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-group-membership-mapper"
+        },
+        {
+          "config": {
+            "access.token.claim": "true",
+            "claim.name": "realm_access.roles",
+            "id.token.claim": "true",
+            "jsonType.label": "String",
+            "multivalued": "true",
+            "userinfo.token.claim": "true"
+          },
+          "consentRequired": false,
+          "name": "realm roles",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-realm-role-mapper"
+        }
+      ],
+      "publicClient": false,
+      "redirectUris": [
+        "http://localhost:8000/api/auth/authorize",
+        "http://127.0.0.1:8000/api/auth/authorize",
+        "http://app.localhost/api/auth/authorize"
+      ],
+      "secret": "L0nrBUABwIm3ghXrrXmoX76BJ6xjzDvy_wzDff6rKQ0",
+      "standardFlowEnabled": true,
+      "webOrigins": [
+        "http://localhost:8000",
+        "http://app.localhost"
+      ]
+    }
+  ],
+  "enabled": true,
+  "groups": [
+    {
+      "name": "developers",
+      "path": "/developers"
+    },
+    {
+      "name": "sysadmins",
+      "path": "/sysadmins"
+    }
+  ],
+  "id": "myrealm",
+  "realm": "myrealm",
+  "roles": {
+    "realm": [
+      {
+        "description": "Read Only role",
+        "name": "read_only"
+      },
+      {
+        "description": "Full Access role",
+        "name": "full_access"
+      }
+    ]
+  },
+  "users": [
+    {
+      "credentials": [
+        {
+          "temporary": false,
+          "type": "password",
+          "value": "user"
+        }
+      ],
+      "email": "user@example.com",
+      "enabled": true,
+      "firstName": "User",
+      "groups": [
+        "/developers"
+      ],
+      "lastName": "One",
+      "realmRoles": [
+        "read_only"
+      ],
+      "username": "user"
+    },
+    {
+      "credentials": [
+        {
+          "temporary": false,
+          "type": "password",
+          "value": "admin"
+        }
+      ],
+      "email": "admin@example.com",
+      "enabled": true,
+      "firstName": "Admin",
+      "groups": [
+        "/sysadmins"
+      ],
+      "lastName": "One",
+      "realmRoles": [
+        "full_access"
+      ],
+      "username": "admin"
+    }
+  ]
+}

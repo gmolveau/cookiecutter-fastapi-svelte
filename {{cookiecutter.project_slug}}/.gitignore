@@ -1,0 +1,6 @@
+.idea/
+*.env
+.devcontainer/customize.sh
+!keycloak/volumes/.gitignore
+keycloak/volumes
+TODO

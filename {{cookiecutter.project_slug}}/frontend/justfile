@@ -1,0 +1,37 @@
+set shell := ["bash", "-euo", "pipefail", "-c"]
+set dotenv-load := true
+
+default:
+    @just --list
+
+build:
+    pnpm run build
+
+install-prod:
+    pnpm install --prod --frozen-lockfile
+
+install-dev:
+    pnpm install --frozen-lockfile
+
+upgrade:
+    pnpm update --loglevel verbose
+
+run-dev:
+    pnpm run dev --host
+
+tests:
+    pnpm run tests
+
+lint:
+    pnpm run lint
+    pnpm run check
+
+format:
+    pnpm run format
+
+checks: lint
+
+clean:
+    rm -rf node_modules
+    rm -rf test-reports
+    rm -rf dist

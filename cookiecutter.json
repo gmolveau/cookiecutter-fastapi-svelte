@@ -1,0 +1,12 @@
+{
+  "project_name": "My App",
+  "project_slug": "my-app",
+  "python_package_name": "myapp",
+  "description": "A fullstack web application",
+  "author_name": "Your Name",
+  "github_username": "your-username",
+  "_copy_without_render": [
+    ".github",
+    "frontend"
+  ]
+}

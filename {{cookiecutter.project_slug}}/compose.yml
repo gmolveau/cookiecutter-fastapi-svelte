@@ -1,0 +1,160 @@
+x-backend-base: &backend-base
+  build:
+    dockerfile: ./docker/Dockerfile
+    context: ./backend
+    target: dev
+  image: "{{cookiecutter.project_slug}}/backend:dev"
+  env_file: ".env"
+  volumes:
+    - ${DATA_FOLDER:?}:/app/data
+
+services:
+  traefik:
+    image: traefik:v3.6.12
+    command:
+      - "--api.insecure=true"
+      - "--log.level=DEBUG"
+      - "--entrypoints.web.address=:80"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--providers.docker.network=public-network"
+    ports:
+      - "80:80"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.dashboard.rule: Host(`traefik.localhost`)
+      traefik.http.routers.dashboard.service: api@internal
+    networks:
+      public-network:
+        aliases:
+          - app.localhost
+          - keycloak.localhost
+
+  migrate:
+    <<: *backend-base
+    command: just migrate
+    restart: "no"
+
+  backend:
+    <<: *backend-base
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "uv",
+          "run",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health')",
+        ]
+      interval: 5s
+      timeout: 10s
+      retries: 30
+      start_period: 5s
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      keycloak:
+        condition: service_started
+    labels:
+      traefik.enable: true
+      traefik.docker.network: public-network
+      traefik.http.routers.backend.rule: Host(`app.localhost`) && PathPrefix(`/api`)
+      traefik.http.routers.backend.service: backend
+      traefik.http.services.backend.loadbalancer.server.port: 8000
+    networks:
+      - public-network
+    volumes:
+      - ${DATA_FOLDER:?}:/app/data
+      - ${STATIC_FOLDER:?}:/app/static
+    develop:
+      watch:
+        - action: sync
+          path: ./backend
+          target: /app
+          ignore:
+            - .venv/
+            - data/
+            - static/
+            - .ruff_cache/
+            - __pycache__/
+            - .env
+        - action: rebuild
+          path: backend/pyproject.toml
+        - action: rebuild
+          path: backend/uv.lock
+        - action: rebuild
+          path: backend/docker/Dockerfile
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: ./docker/Dockerfile
+      target: dev
+    image: "{{cookiecutter.project_slug}}/frontend:dev"
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: public-network
+      traefik.http.routers.frontend.rule: Host(`app.localhost`)
+      traefik.http.routers.frontend.service: frontend
+      traefik.http.services.frontend.loadbalancer.server.port: 5173
+    networks:
+      - public-network
+    depends_on:
+      backend:
+        condition: service_healthy
+    env_file: ".env"
+    develop:
+      watch:
+        - action: sync
+          path: ./frontend
+          target: /app
+          ignore:
+            - node_modules/
+            - .env
+        - action: rebuild
+          path: frontend/package-lock.json
+        - action: rebuild
+          path: frontend/docker/Dockerfile
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.76.0
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+    expose:
+      - "4318"
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: public-network
+      traefik.http.routers.jaeger.rule: Host(`jaeger.localhost`)
+      traefik.http.routers.jaeger.service: jaeger
+      traefik.http.services.jaeger.loadbalancer.server.port: 16686
+    networks:
+      - public-network
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:24.0.0
+    command: start-dev --import-realm
+    environment:
+      KEYCLOAK_ADMIN: keycloak
+      KEYCLOAK_ADMIN_PASSWORD: keycloak
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: public-network
+      traefik.http.routers.keycloak.rule: Host(`keycloak.localhost`)
+      traefik.http.routers.keycloak.service: keycloak
+      traefik.http.services.keycloak.loadbalancer.server.port: 8080
+    networks:
+      - public-network
+    volumes:
+      - keycloak-data:/opt/keycloak/data
+      - ./keycloak/realm-export.json:/opt/keycloak/data/import/realm-export.json
+
+networks:
+  public-network: # exposed by traefik
+    name: public-network
+
+volumes:
+  keycloak-data:
