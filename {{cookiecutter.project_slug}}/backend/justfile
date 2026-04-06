@@ -5,10 +5,10 @@ default:
     @just --list
 
 install:
-    uv sync --locked
+    uv sync --frozen
 
 install-dev:
-    uv sync --locked --dev
+    uv sync --frozen --dev
 
 upgrade:
     uv sync --upgrade
