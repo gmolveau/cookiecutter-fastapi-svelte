@@ -28,5 +28,6 @@ if result.returncode != 0:
 print()
 print("Done")
 print("Next steps:")
+print("  cd {{cookiecutter.project_slug}}")
 print("  cd backend && just migrate")
 print("  just dev-up")

@@ -23,7 +23,7 @@ run-prod:
     uv run uvicorn src.web:app --host 0.0.0.0 --port=8000 --workers $(python3 -c "import os; print(os.cpu_count() * 2 + 1)")
 
 new-migrate name:
-    uv run alembic -c src/migrations/alembic.ini revision --autogenerate -m {% raw %}{{ name }}{% endraw %}
+    uv run alembic -c src/migrations/alembic.ini revision --autogenerate -m {{ name }}
 
 migrate:
     uv run alembic -c src/migrations/alembic.ini upgrade head

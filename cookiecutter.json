@@ -7,6 +7,8 @@
   "github_username": "your-username",
   "_copy_without_render": [
     ".github",
-    "frontend"
+    "frontend",
+    "justfile",
+    "backend/justfile"
   ]
 }
