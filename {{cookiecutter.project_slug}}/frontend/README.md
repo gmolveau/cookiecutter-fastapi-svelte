@@ -1,6 +1,6 @@
-# MemeGenerator — Frontend
+# {{cookiecutter.project_slug}} — Frontend
 
-A SvelteKit application for creating memes: browse and upload templates, compose text and image layers, apply effects, and export the result as a JPG.
+A SvelteKit application for {{cookiecutter.project_slug}}
 
 ## Stack
 

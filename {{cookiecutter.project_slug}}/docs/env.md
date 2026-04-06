@@ -54,9 +54,9 @@ Configured via a `.env` file at the repo root (e.g. copy `.env.dev.example`).
 
 ### Database
 
-| Variable       | Default                              | Description                                                 |
-| -------------- | ------------------------------------ | ----------------------------------------------------------- |
-| `DATABASE_URL` | `sqlite:///./data/meme_generator.db` | SQLAlchemy connection URL. Defaults to a local SQLite file. |
+| Variable       | Default                      | Description                                                 |
+| -------------- | ---------------------------- | ----------------------------------------------------------- |
+| `DATABASE_URL` | `sqlite:///./data/sqlite.db` | SQLAlchemy connection URL. Defaults to a local SQLite file. |
 
 ### Logging
 
@@ -66,11 +66,11 @@ Configured via a `.env` file at the repo root (e.g. copy `.env.dev.example`).
 
 ### OpenTelemetry
 
-| Variable                      | Default         | Required | Description                                                                                                 |
-| ----------------------------- | --------------- | -------- | ----------------------------------------------------------------------------------------------------------- |
-| `OTEL_ENABLED`                | `false`         | No       | Set to `true` to enable OpenTelemetry tracing.                                                              |
-| `OTEL_SERVICE_NAME`           | `memegenerator` | No       | Service name reported in traces.                                                                            |
-| `OTEL_EXPORTER_OTLP_ENDPOINT` | —               | No       | Base URL of the OTLP HTTP collector (e.g. `http://jaeger:4318`). Traces are sent to `<endpoint>/v1/traces`. |
+| Variable                      | Default                         | Required | Description                                                                                                 |
+| ----------------------------- | ------------------------------- | -------- | ----------------------------------------------------------------------------------------------------------- |
+| `OTEL_ENABLED`                | `false`                         | No       | Set to `true` to enable OpenTelemetry tracing.                                                              |
+| `OTEL_SERVICE_NAME`           | `{{cookiecutter.project_slug}}` | No       | Service name reported in traces.                                                                            |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | —                               | No       | Base URL of the OTLP HTTP collector (e.g. `http://jaeger:4318`). Traces are sent to `<endpoint>/v1/traces`. |
 
 ### Storage
 

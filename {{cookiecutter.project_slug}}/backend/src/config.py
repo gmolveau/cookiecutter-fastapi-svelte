@@ -30,7 +30,7 @@ class Settings(BaseSettings):
 
     # OpenTelemetry
     OTEL_ENABLED: bool = False
-    OTEL_SERVICE_NAME: str = "memegenerator"
+    OTEL_SERVICE_NAME: str = "{{cookiecutter.project_slug}}"
     OTEL_EXPORTER_OTLP_ENDPOINT: str
 
 
