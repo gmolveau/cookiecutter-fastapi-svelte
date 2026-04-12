@@ -1,8 +1,8 @@
-FROM ghcr.io/astral-sh/uv:python3.13-trixie-slim AS base
+FROM ghcr.io/astral-sh/uv:python3.13-trixie-slim@sha256:82f018bb3bd8b1d12c376c3e87da186ec1932cbf91bc8e73089feea6428fec00 AS base
 
 SHELL ["/bin/bash", "-c"]
 
-COPY --from=ghcr.io/casey/just:latest /just /usr/local/bin/
+COPY --from=ghcr.io/casey/just:latest@sha256:60c0e2abbf221ee0a8ea9a5057160a30a4a7f1c1603bd3bf35c8aea01401d357 /just /usr/local/bin/
 
 ENV UV_COMPILE_BYTECODE=1
 ENV UV_LINK_MODE=copy

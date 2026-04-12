@@ -1,10 +1,10 @@
-FROM node:trixie-slim AS base
+FROM node:trixie-slim@sha256:46c2e03fa9f715d1568ebf054e27d2cf74d4c0897f2ad1763ae571d27190dfdd AS base
 
 SHELL ["/bin/bash", "-c"]
 
 FROM base AS dev_base
 
-COPY --from=ghcr.io/casey/just:latest /just /usr/local/bin/
+COPY --from=ghcr.io/casey/just:latest@sha256:60c0e2abbf221ee0a8ea9a5057160a30a4a7f1c1603bd3bf35c8aea01401d357 /just /usr/local/bin/
 
 RUN npm install -g pnpm@latest-10
 
