@@ -1,0 +1,123 @@
+x-backend-base: &backend-base
+  build:
+    dockerfile: ./docker/Dockerfile
+    context: ./backend
+    target: prod
+    args:
+      APP_VERSION: localprod
+  image: "[[ project_slug ]]/backend:prod"
+  # image: "ghcr.io/[[ github_username ]]/[[ project_slug ]]/backend:latest"
+  env_file: ".env"
+  volumes:
+    - app_data:/app/data
+
+services:
+  traefik:
+    image: traefik:v3.6.12
+    command:
+      - "--api.insecure=true"
+      - "--log.level=DEBUG"
+      - "--entrypoints.web.address=:80"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--providers.docker.network=public-network"
+    ports:
+      - "80:80"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.dashboard.rule: Host(`traefik.localhost`)
+      traefik.http.routers.dashboard.service: api@internal
+    networks:
+      public-network:
+        aliases:
+          - app.localhost
+          - keycloak.localhost
+
+  migrate:
+    <<: *backend-base
+    command: just migrate
+    restart: "no"
+
+  backend:
+    <<: *backend-base
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "uv",
+          "run",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health')",
+        ]
+      interval: 5s
+      timeout: 10s
+      retries: 30
+      start_period: 5s
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      keycloak:
+        condition: service_started
+    labels:
+      traefik.enable: true
+      traefik.docker.network: public-network
+      traefik.http.routers.backend.rule: Host(`app.localhost`) && PathPrefix(`/api`)
+      traefik.http.routers.backend.service: backend
+      traefik.http.services.backend.loadbalancer.server.port: 8000
+    networks:
+      - public-network
+    volumes:
+      - app_data:/app/data
+      - app_static:/app/static
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: ./docker/Dockerfile
+      target: prod
+      args:
+        APP_VERSION: localprod
+    image: "[[ project_slug ]]/frontend:prod"
+    # image: "ghcr.io/[[ github_username ]]/[[ project_slug ]]/frontend:latest"
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: public-network
+      traefik.http.routers.frontend.rule: Host(`app.localhost`)
+      traefik.http.routers.frontend.service: frontend
+      traefik.http.services.frontend.loadbalancer.server.port: 3000
+    networks:
+      - public-network
+    depends_on:
+      backend:
+        condition: service_healthy
+    env_file: ".env"
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:24.0.0
+    command: start-dev --import-realm
+    environment:
+      KEYCLOAK_ADMIN: keycloak
+      KEYCLOAK_ADMIN_PASSWORD: keycloak
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: public-network
+      traefik.http.routers.keycloak.rule: Host(`keycloak.localhost`)
+      traefik.http.routers.keycloak.service: keycloak
+      traefik.http.services.keycloak.loadbalancer.server.port: 8080
+    networks:
+      - public-network
+    volumes:
+      - keycloak-data:/opt/keycloak/data
+      - ./keycloak/realm-export.json:/opt/keycloak/data/import/realm-export.json
+
+networks:
+  public-network: # exposed by traefik
+    name: public-network
+
+volumes:
+  keycloak-data:
+  app_data:
+  app_static:
