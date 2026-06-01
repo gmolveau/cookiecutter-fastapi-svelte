@@ -10,7 +10,7 @@
 <header class="border-b bg-white shadow-sm">
 	<div class="mx-auto grid max-w-6xl grid-cols-3 items-center px-4 py-3">
 		<div class="flex items-baseline gap-2">
-			<a href={resolve('/')} class="text-xl font-bold tracking-tight text-indigo-700">My App</a>
+			<a href={resolve('/')} class="text-xl font-bold tracking-tight text-indigo-700">[[ project_name ]]</a>
 			<span class="text-xs text-gray-400">{__APP_VERSION__}</span>
 		</div>
 

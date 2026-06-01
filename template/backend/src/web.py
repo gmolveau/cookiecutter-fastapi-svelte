@@ -9,16 +9,17 @@ from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.staticfiles import StaticFiles
-from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
-from slowapi.util import get_remote_address
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 from starlette.requests import Request
+from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 
 from src.config import get_settings
 from src.database import database_engine
+from src.limiter import limiter
 from src.logging_setup import setup_logging
 from src.otel_setup import setup_otel
 from src.routes.auth import router as auth_router
@@ -43,7 +44,6 @@ class RequestContextMiddleware(BaseHTTPMiddleware):
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("startup")
-    active_disk.ensure()
     yield
 
 
@@ -55,7 +55,6 @@ def create_app() -> FastAPI:
 
     app.add_middleware(RequestContextMiddleware)
 
-    limiter = Limiter(key_func=get_remote_address, default_limits=[settings.RATE_LIMIT])
     app.state.limiter = limiter
     app.add_exception_handler(
         RateLimitExceeded,
@@ -74,6 +73,9 @@ def create_app() -> FastAPI:
         middleware_class=TrustedHostMiddleware, allowed_hosts=allowed_hosts
     )
 
+    # Must be outermost: patches request scheme from X-Forwarded-Proto (set by Traefik)
+    app.add_middleware(ProxyHeadersMiddleware, trusted_hosts="*")
+
     allowed_origins: list[str] = os.environ["ALLOWED_ORIGINS"].split(sep=",")
     app.add_middleware(
         middleware_class=CORSMiddleware,
@@ -91,9 +93,18 @@ def create_app() -> FastAPI:
             otlp_endpoint=settings.OTEL_EXPORTER_OTLP_ENDPOINT,
         )
 
+    app.mount(
+        path="/api/static",
+        app=StaticFiles(directory="static"),
+        name="static",
+    )
+
     if isinstance(active_disk, LocalDisk):
+        active_disk.ensure()
         app.mount(
-            path="/api/static", app=StaticFiles(directory="static"), name="static"
+            path="/api/files",
+            app=StaticFiles(directory=active_disk.root),
+            name="files",
         )
 
     api_router = APIRouter(prefix="/api")

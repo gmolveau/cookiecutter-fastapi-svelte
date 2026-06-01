@@ -34,7 +34,7 @@ def assign_role_to_user(
     if name is not None:
         conditions.append(User.name == name)
     if user_id is not None:
-        conditions.append(user_id)
+        conditions.append(User.id == user_id)
 
     if not conditions:
         return None

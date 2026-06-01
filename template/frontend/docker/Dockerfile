@@ -6,7 +6,7 @@ FROM base AS dev_base
 
 COPY --from=ghcr.io/casey/just:latest@sha256:60c0e2abbf221ee0a8ea9a5057160a30a4a7f1c1603bd3bf35c8aea01401d357 /just /usr/local/bin/
 
-RUN npm install -g pnpm@latest-10
+RUN npm install -g pnpm@latest-11
 
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"

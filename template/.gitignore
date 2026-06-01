@@ -4,3 +4,7 @@
 !keycloak/volumes/.gitignore
 keycloak/volumes
 TODO
+!data/.gitignore
+data
+!static/.gitignore
+static

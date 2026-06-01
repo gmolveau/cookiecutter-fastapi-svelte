@@ -1,5 +1,5 @@
 set shell := ["bash", "-euo", "pipefail", "-c"]
-set dotenv-load := true
+set dotenv-load
 
 default:
     @just --list
@@ -14,7 +14,7 @@ upgrade:
     uv sync --upgrade
 
 create-volumes:
-    mkdir -p static/templates
+    mkdir -p data
 
 run-dev:
     uv run uvicorn src.web:app --reload --host 0.0.0.0 --port=8000

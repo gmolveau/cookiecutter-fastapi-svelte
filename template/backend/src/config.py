@@ -8,12 +8,13 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    # Auth Keycloak / OIDC
-    KEYCLOAK_CLIENT_ID: str
-    KEYCLOAK_CLIENT_SECRET: str
-    KEYCLOAK_AUTHORIZE_URL: str
-    KEYCLOAK_ACCESS_TOKEN_URL: str
-    KEYCLOAK_JWT_URL: str
+    # Auth OIDC
+    OIDC_CLIENT_ID: str
+    OIDC_CLIENT_SECRET: str
+    OIDC_AUTHORIZE_URL: str
+    OIDC_ACCESS_TOKEN_URL: str
+    OIDC_JWT_URL: str
+    OIDC_REQUIRE_EMAIL_VERIFIED: bool
 
     # Session
     SESSION_SECRET_KEY: str

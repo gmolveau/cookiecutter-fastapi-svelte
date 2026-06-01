@@ -11,7 +11,7 @@ A fullstack web application with a FastAPI backend and SvelteKit frontend. Authe
 ## Repo layout
 
 ```console
-[[ project_slug ]]/
+[[ project_name ]]/
 ├── backend/          # Python / FastAPI API
 ├── frontend/         # SvelteKit SPA
 ├── keycloak/         # Keycloak realm export for local dev
@@ -159,36 +159,31 @@ backend/src/
 ├── otel_setup.py        # OpenTelemetry tracer provider + instrumentation
 ├── database.py          # Engine, session factory, get_db() dependency
 ├── dependencies.py      # Shared FastAPI dependencies (auth, current user)
-├── models.py            # SQLAlchemy ORM models (User, Group, Role, Item)
+├── models.py            # SQLAlchemy ORM models (User, Group, Role, Project)
 ├── exceptions.py        # Domain exceptions
 ├── migrations/          # Alembic env + versioned migration scripts
 ├── schemas/
-│   └── item.py          # Pydantic request / response schemas
 ├── services/
-│   ├── items.py         # Business logic for items (DB queries)
 │   └── users.py         # Business logic for users (upsert on login)
 ├── routes/
 │   ├── auth.py          # OAuth2 / Keycloak login, callback, logout, /auth/me
 │   ├── health.py        # GET /health
-│   └── items.py         # FastAPI router — thin HTTP layer only
 ├── storage/
 │   ├── disk.py          # StorageDisk abstract base class
 │   ├── local.py         # LocalDisk implementation (dev default)
 │   └── s3.py            # S3Disk implementation
 └── cli/
     ├── main.py          # CLI entry point (click app)
-    ├── items.py         # CLI commands for item management
     └── users.py         # CLI commands for user management
 ```
 
 ### Data model
 
-| Model   | Key fields                                        |
-| ------- | ------------------------------------------------- |
-| `Item`  | `name`, `description`, `creator_id`               |
-| `User`  | `name`, `email`, `sub` (OIDC subject), `role_id`  |
-| `Role`  | `name`                                            |
-| `Group` | `name`, `role_id`; many-to-many with `User`       |
+| Model   | Key fields                                       |
+| ------- | ------------------------------------------------ |
+| `User`  | `name`, `email`, `sub` (OIDC subject), `role_id` |
+| `Role`  | `name`                                           |
+| `Group` | `name`, `role_id`; many-to-many with `User`      |
 
 ### Request lifecycle
 
@@ -222,7 +217,7 @@ Set the following variables in your `.env` to enable tracing:
 
 ```env
 OTEL_ENABLED=true
-OTEL_SERVICE_NAME=[[ project_slug ]]
+OTEL_SERVICE_NAME=[[ project_name ]]
 OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318
 ```
 

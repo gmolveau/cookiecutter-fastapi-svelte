@@ -1,5 +1,5 @@
 set shell := ["bash", "-euo", "pipefail", "-c"]
-set dotenv-load := true
+set dotenv-load
 
 default:
     @just --list
@@ -47,6 +47,22 @@ localprod-clean:
 
 localprod-backend-shell:
     docker compose -f compose.localprod.yml exec backend bash
+
+### docker compose prod stack
+
+prod-up:
+    [ -f .env ] || (echo "missing .env"; exit 1)
+    docker compose -f compose.prod.yml pull
+    docker compose -f compose.prod.yml up -d
+
+prod-stop:
+    docker compose -f compose.prod.yml down
+
+prod-backend-shell:
+    docker compose -f compose.prod.yml exec backend bash
+
+prod-logs service="":
+    docker compose -f compose.prod.yml logs -f {{ service }}
 
 ### versioning
 

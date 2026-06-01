@@ -3,10 +3,10 @@ x-backend-base: &backend-base
     dockerfile: ./docker/Dockerfile
     context: ./backend
     target: dev
-  image: "[[ project_slug ]]/backend:dev"
+  image: "[[ project_name ]]/backend:dev"
   env_file: ".env"
   volumes:
-    - ${DATA_FOLDER:?}:/app/data
+    - ${DATA_VOLUME:?}:/app/data
 
 services:
   traefik:
@@ -66,9 +66,8 @@ services:
       traefik.http.services.backend.loadbalancer.server.port: 8000
     networks:
       - public-network
-    volumes:
-      - ${DATA_FOLDER:?}:/app/data
-      - ${STATIC_FOLDER:?}:/app/static
+    ports:
+      - "8000:8000"
     develop:
       watch:
         - action: sync
@@ -93,7 +92,7 @@ services:
       context: ./frontend
       dockerfile: ./docker/Dockerfile
       target: dev
-    image: "[[ project_slug ]]/frontend:dev"
+    image: "[[ project_name ]]/frontend:dev"
     labels:
       traefik.enable: "true"
       traefik.docker.network: public-network
@@ -115,7 +114,7 @@ services:
             - node_modules/
             - .env
         - action: rebuild
-          path: frontend/package-lock.json
+          path: frontend/pnpm-lock.yaml
         - action: rebuild
           path: frontend/docker/Dockerfile
 
@@ -149,7 +148,7 @@ services:
     networks:
       - public-network
     volumes:
-      - keycloak-data:/opt/keycloak/data
+      - ./backend/data/keycloak:/opt/keycloak/data
       - ./keycloak/realm-export.json:/opt/keycloak/data/import/realm-export.json
 
 networks:
@@ -157,4 +156,4 @@ networks:
     name: public-network
 
 volumes:
-  keycloak-data:
+  app_data:

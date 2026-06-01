@@ -4,7 +4,6 @@ Environment variables
 ---------------------
 STORAGE_DRIVER              ``local`` or ``s3``          default: local
 STORAGE_LOCAL_PATH          root dir for local disk       required
-STORAGE_LOCAL_BASE_URL      URL prefix for local disk     required
 STORAGE_S3_BUCKET            bucket name                   required when driver=s3
 STORAGE_S3_REGION            region
 STORAGE_S3_PREFIX            key prefix inside bucket
@@ -34,7 +33,7 @@ if _disk_type == "s3":
 else:
     active_disk = LocalDisk(
         root=os.environ["STORAGE_LOCAL_PATH"],
-        base_url=os.environ["STORAGE_LOCAL_BASE_URL"],
+        base_url="/api/files",
     )
 
 

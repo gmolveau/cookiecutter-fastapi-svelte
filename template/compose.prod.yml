@@ -1,0 +1,76 @@
+x-backend-base: &backend-base
+  image: "ghcr.io/[[ github_username ]]/[[ project_name ]]/backend:${APP_VERSION:?}"
+  env_file: ".env"
+  volumes:
+    - ${DATA_VOLUME:?}:/app/data
+
+services:
+  traefik:
+    image: traefik:v3.6.12
+    command:
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.web.forwardedHeaders.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--providers.docker.network=public-network"
+    ports:
+      - "80:80"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+    networks:
+      - public-network
+
+  migrate:
+    <<: *backend-base
+    command: just migrate
+    restart: "no"
+
+  backend:
+    <<: *backend-base
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "uv",
+          "run",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health')",
+        ]
+      interval: 5s
+      timeout: 10s
+      retries: 30
+      start_period: 5s
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: public-network
+      traefik.http.routers.backend.rule: Host(`${APP_DOMAIN:?}`) && PathPrefix(`/api`)
+      traefik.http.routers.backend.entrypoints: web
+      traefik.http.services.backend.loadbalancer.server.port: 8000
+    networks:
+      - public-network
+
+  frontend:
+    image: "ghcr.io/[[ github_username ]]/[[ project_name ]]/frontend:${APP_VERSION:?}"
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: public-network
+      traefik.http.routers.frontend.rule: Host(`${APP_DOMAIN:?}`)
+      traefik.http.routers.frontend.entrypoints: web
+      traefik.http.services.frontend.loadbalancer.server.port: 3000
+    networks:
+      - public-network
+    depends_on:
+      backend:
+        condition: service_healthy
+    env_file: ".env"
+
+networks:
+  public-network:
+    name: public-network
+
+volumes:
+  app_data:

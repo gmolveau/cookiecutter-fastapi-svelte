@@ -21,11 +21,11 @@ settings = get_settings()
 
 oauth.register(
     name="keycloak",
-    client_id=settings.KEYCLOAK_CLIENT_ID,
-    client_secret=settings.KEYCLOAK_CLIENT_SECRET,
-    authorize_url=settings.KEYCLOAK_AUTHORIZE_URL,
-    access_token_url=settings.KEYCLOAK_ACCESS_TOKEN_URL,
-    jwks_uri=settings.KEYCLOAK_JWT_URL,
+    client_id=settings.OIDC_CLIENT_ID,
+    client_secret=settings.OIDC_CLIENT_SECRET,
+    authorize_url=settings.OIDC_AUTHORIZE_URL,
+    access_token_url=settings.OIDC_ACCESS_TOKEN_URL,
+    jwks_uri=settings.OIDC_JWT_URL,
     client_kwargs={"scope": "openid email profile"},
 )
 
@@ -51,7 +51,7 @@ async def login_endpoint(
     if next_url and is_next_url_valid(next_url):
         request.session["next_url"] = next_url
 
-    return await oauth.keycloak.authorize_redirect(request, redirect_uri, nonce=nonce)
+    return await oauth.keycloak.authorize_redirect(request, redirect_uri, nonce=nonce, prompt="login")
 
 
 @router.get("/authorize", name="authorize_endpoint")
@@ -61,10 +61,13 @@ async def authorize_endpoint(request: Request, db: SessionDep):
         raise HTTPException(status_code=401, detail="Missing nonce")
     oidc_token = await oauth.keycloak.authorize_access_token(request)
     data = await oauth.keycloak.parse_id_token(oidc_token, nonce)
+    if settings.OIDC_REQUIRE_EMAIL_VERIFIED and not data.get("email_verified"):
+        return RedirectResponse(url="/email-not-verified")
+
     sub: str = data["sub"]
     name: str = data["name"]
     email: str = data["email"]
-    group_names: list[str] = data["groups"]
+    group_names: list[str] = data.get("groups", [])
 
     user = upsert_user(db, sub=sub, name=name, email=email, group_names=group_names)
     logger.info("user.login", sub=sub, name=name, email=email)

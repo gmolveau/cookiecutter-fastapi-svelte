@@ -11,7 +11,9 @@
 
 import re
 import sys
+import argparse
 import difflib
+import subprocess
 from pathlib import Path
 
 import yaml
@@ -25,6 +27,7 @@ TEMPLATE_DIR = ROOT / "template"
 APP_DIR = ROOT / "app"
 COPIER_ANSWERS = APP_DIR / ".copier-answers.yml"
 SKIP_FILES = {".copier-answers.yml"}
+SKIP_DIRS = {".git", "__pycache__", "node_modules", ".venv", ".mypy_cache", ".ruff_cache", ".pytest_cache"}
 
 console = Console()
 
@@ -92,6 +95,50 @@ def find_changed(render) -> list[str]:
     return changed
 
 
+def get_gitignored(app_dir: Path, rel_paths: list[str]) -> set[str]:
+    if not rel_paths:
+        return set()
+    try:
+        result = subprocess.run(
+            ["git", "-C", str(app_dir), "check-ignore", "-z", "--stdin"],
+            input="\0".join(rel_paths),
+            capture_output=True,
+            text=True,
+        )
+        return set(filter(None, result.stdout.split("\0")))
+    except (FileNotFoundError, subprocess.SubprocessError):
+        return set()
+
+
+def find_new() -> list[str]:
+    candidates = []
+    for app_file in sorted(APP_DIR.rglob("*")):
+        if not app_file.is_file():
+            continue
+        if any(part in SKIP_DIRS for part in app_file.relative_to(APP_DIR).parts):
+            continue
+        rel = app_file.relative_to(APP_DIR)
+        if str(rel) in SKIP_FILES:
+            continue
+        if not (TEMPLATE_DIR / rel).exists():
+            candidates.append(str(rel))
+    ignored = get_gitignored(APP_DIR, candidates)
+    return [r for r in candidates if r not in ignored]
+
+
+def find_deleted() -> list[str]:
+    deleted = []
+    for tpl in sorted(TEMPLATE_DIR.rglob("*")):
+        if not tpl.is_file():
+            continue
+        rel = tpl.relative_to(TEMPLATE_DIR)
+        if str(rel) in SKIP_FILES:
+            continue
+        if not (APP_DIR / rel).exists():
+            deleted.append(str(rel))
+    return deleted
+
+
 def show_diff(tpl_rendered: str, app_text: str, rel: str) -> None:
     diff = list(difflib.unified_diff(
         tpl_rendered.splitlines(keepends=True),
@@ -126,41 +173,102 @@ def backport(rel: str, derender) -> None:
     console.print(f"[green]Backported:[/green] {rel}")
 
 
+def delete_from_template(rel: str) -> None:
+    tpl = TEMPLATE_DIR / rel
+    tpl.unlink()
+    console.print(f"[red]Deleted from template:[/red] {rel}")
+
+
+_DEL_PREFIX = "[deleted] "
+_NEW_PREFIX = "[new] "
+
+
 def main() -> None:
+    global APP_DIR, COPIER_ANSWERS
+
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--app-dir",
+        type=Path,
+        default=APP_DIR,
+        help=f"Path to the app directory (default: {APP_DIR})",
+    )
+    args = parser.parse_args()
+    APP_DIR = args.app_dir.resolve()
+    COPIER_ANSWERS = APP_DIR / ".copier-answers.yml"
+
     vars = load_vars()
     render = make_render(vars)
     derender = make_derender(vars)
 
     while True:
         changed = find_changed(render)
+        deleted = find_deleted()
+        new = find_new()
 
-        if not changed:
-            console.print("[green]No changed files.[/green]")
+        if not changed and not deleted and not new:
+            console.print("[green]No changed, deleted, or new files.[/green]")
             break
+
+        choices: list = []
+        if changed:
+            choices.append(questionary.Separator("── changed ──"))
+            choices.extend(changed)
+        if deleted:
+            choices.append(questionary.Separator("── deleted in app ──"))
+            choices.extend(f"{_DEL_PREFIX}{r}" for r in deleted)
+        if new:
+            choices.append(questionary.Separator("── new in app ──"))
+            choices.extend(f"{_NEW_PREFIX}{r}" for r in new)
+        choices.extend([questionary.Separator(), "quit"])
 
         console.print(Rule("Backport tool"))
-        rel = questionary.select(
+        selection = questionary.select(
             "Which file to backport?",
-            choices=[*changed, questionary.Separator(), "quit"],
+            choices=choices,
         ).ask()
 
-        if rel is None or rel == "quit":
+        if selection is None or selection == "quit":
             break
 
-        tpl = TEMPLATE_DIR / rel
-        app = APP_DIR / rel
-        tpl_rendered = render(read_text_safe(tpl) or "")
-        app_text = read_text_safe(app) or ""
-
-        console.print()
-        console.print(Rule(rel))
-        show_diff(tpl_rendered, app_text, rel)
-        console.print()
-
-        if questionary.confirm("Apply this backport?", default=False).ask():
-            backport(rel, derender)
+        if selection.startswith(_DEL_PREFIX):
+            rel = selection[len(_DEL_PREFIX):]
+            console.print()
+            console.print(Rule(rel))
+            console.print(f"[red]File deleted from app — will remove from template:[/red] {rel}")
+            console.print()
+            if questionary.confirm("Delete this file from template?", default=False).ask():
+                delete_from_template(rel)
+            else:
+                console.print("[yellow]Skipped.[/yellow]")
+        elif selection.startswith(_NEW_PREFIX):
+            rel = selection[len(_NEW_PREFIX):]
+            app = APP_DIR / rel
+            app_text = read_text_safe(app) or ""
+            console.print()
+            console.print(Rule(rel))
+            show_diff("", app_text, rel)
+            console.print()
+            if questionary.confirm("Add this file to template?", default=False).ask():
+                backport(rel, derender)
+            else:
+                console.print("[yellow]Skipped.[/yellow]")
         else:
-            console.print("[yellow]Skipped.[/yellow]")
+            rel = selection
+            tpl = TEMPLATE_DIR / rel
+            app = APP_DIR / rel
+            tpl_rendered = render(read_text_safe(tpl) or "")
+            app_text = read_text_safe(app) or ""
+
+            console.print()
+            console.print(Rule(rel))
+            show_diff(tpl_rendered, app_text, rel)
+            console.print()
+
+            if questionary.confirm("Apply this backport?", default=False).ask():
+                backport(rel, derender)
+            else:
+                console.print("[yellow]Skipped.[/yellow]")
 
         console.print()
         if not questionary.confirm("Continue with another file?", default=True).ask():

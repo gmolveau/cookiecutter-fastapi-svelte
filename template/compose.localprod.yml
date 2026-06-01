@@ -1,12 +1,12 @@
 x-backend-base: &backend-base
-  build:
-    dockerfile: ./docker/Dockerfile
-    context: ./backend
-    target: prod
-    args:
-      APP_VERSION: localprod
-  image: "[[ project_slug ]]/backend:prod"
-  # image: "ghcr.io/[[ github_username ]]/[[ project_slug ]]/backend:latest"
+  # build:
+  #   dockerfile: ./docker/Dockerfile
+  #   context: ./backend
+  #   target: prod
+  #   args:
+  #     APP_VERSION: localprod
+  # image: "[[ project_name ]]/backend:prod"
+  image: "ghcr.io/[[ github_username ]]/[[ project_name ]]/backend:${APP_VERSION:?}"
   env_file: ".env"
   volumes:
     - app_data:/app/data
@@ -71,17 +71,16 @@ services:
       - public-network
     volumes:
       - app_data:/app/data
-      - app_static:/app/static
 
   frontend:
-    build:
-      context: ./frontend
-      dockerfile: ./docker/Dockerfile
-      target: prod
-      args:
-        APP_VERSION: localprod
-    image: "[[ project_slug ]]/frontend:prod"
-    # image: "ghcr.io/[[ github_username ]]/[[ project_slug ]]/frontend:latest"
+    # build:
+    #   context: ./frontend
+    #   dockerfile: ./docker/Dockerfile
+    #   target: prod
+    #   args:
+    #     APP_VERSION: localprod
+    # image: "[[ project_name ]]/frontend:prod"
+    image: "ghcr.io/[[ github_username ]]/[[ project_name ]]/frontend:${APP_VERSION:?}"
     labels:
       traefik.enable: "true"
       traefik.docker.network: public-network
@@ -110,7 +109,7 @@ services:
     networks:
       - public-network
     volumes:
-      - keycloak-data:/opt/keycloak/data
+      - keycloak_localprod_data:/opt/keycloak/data
       - ./keycloak/realm-export.json:/opt/keycloak/data/import/realm-export.json
 
 networks:
@@ -118,6 +117,5 @@ networks:
     name: public-network
 
 volumes:
-  keycloak-data:
+  keycloak_localprod_data:
   app_data:
-  app_static:

@@ -1,6 +1,14 @@
 _subdirectory: template
 _templates_suffix: ""
 _answers_file: .copier-answers.yml
+_message_after_copy: |
+  Your project [[ project_name ]] is ready!
+
+  Next steps:
+    cd [[ _copier_conf.dst_path ]]
+    just init-env
+    (cd backend && uv sync)
+    (cd frontend && just install-dev)
 _envops:
   block_start_string: "<%"
   block_end_string: "%>"
@@ -8,13 +16,6 @@ _envops:
   variable_end_string: "]]"
   comment_start_string: "<#"
   comment_end_string: "#>"
-
-_tasks:
-  - command: uv sync
-    working_directory: backend
-  - command: just install-dev
-    working_directory: frontend
-  - just init-env
 
 project_name:
   type: str

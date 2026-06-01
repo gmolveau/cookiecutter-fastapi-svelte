@@ -52,6 +52,7 @@ Instantiate the template by using :
 
 ```bash
 uvx copier copy . ./app \
+  --trust \
   --data project_name="MyApp" \
   --data project_slug="my-app" \
   --data python_package_name="myapp" \
@@ -66,14 +67,21 @@ cd app
 just dev-up
 ```
 
-Then see what changed between the `app` and the `template` using the helper scripts in the `./scripts` folder, to easily update the template.
+### Backport changes from app to template
+
+After editing files in `app/`, use the interactive backport script to propagate changes back into `template/`:
 
 ```bash
-$ ./scripts/list-changed.sh
-
-.copier-answers.yml
-compose.yml
+uv run scripts/backport.py
 ```
+
+The script:
+
+- Detects files that differ between `template/` (rendered with your copier variables) and `app/`
+- Detects files deleted from `app/` that still exist in `template/`
+- For **changed** files: shows a unified diff and asks whether to backport (app → template, with values re-replaced by their `[[ var ]]` placeholders) ;
+- For **new** files ;
+- For **deleted** files: asks whether to remove the file from `template/`
 
 ### Test it locally
 
@@ -84,4 +92,7 @@ uvx copier copy ~/dev/cookiecutter-fastapi-svelte /tmp/test-app \
   --data python_package_name="testapp" \
   --data description="Testing the template" \
   --defaults
+
+just dev-up
+# go to http://app.localhost
 ```
