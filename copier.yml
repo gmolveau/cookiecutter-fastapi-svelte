@@ -25,12 +25,12 @@ project_name:
 project_slug:
   type: str
   help: Project slug (directory names, docker image names)
-  default: "{{ project_name | lower | replace(' ', '-') }}"
+  default: "[[ project_name | lower | replace(' ', '-') ]]"
 
 python_package_name:
   type: str
   help: Python package name (used in pyproject.toml)
-  default: "{{ project_slug | replace('-', '') }}"
+  default: "[[ project_slug | replace('-', '') ]]"
 
 description:
   type: str
