@@ -1,4 +1,6 @@
 <script lang="ts">
+	import * as m from '$lib/paraglide/messages';
+
 	interface Props {
 		page: number;
 		totalPages: number;
@@ -29,7 +31,7 @@
 			disabled={page === 0}
 			class="rounded border border-gray-300 px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-40"
 		>
-			← Prev
+			← {m.pagination_prev()}
 		</button>
 
 		{#each pageWindow() as p, i (i)}
@@ -52,7 +54,7 @@
 			disabled={page >= totalPages - 1}
 			class="rounded border border-gray-300 px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-40"
 		>
-			Next →
+			{m.pagination_next()} →
 		</button>
 	</div>
 {/if}

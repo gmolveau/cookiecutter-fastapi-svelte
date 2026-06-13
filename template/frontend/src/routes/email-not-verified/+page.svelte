@@ -1,3 +1,8 @@
+<script lang="ts">
+	import * as m from '$lib/paraglide/messages';
+	import { loginUrl } from '$lib/api/auth';
+</script>
+
 <div class="text-center">
 	<div class="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-yellow-100">
 		<svg
@@ -15,18 +20,19 @@
 		</svg>
 	</div>
 
-	<h1 class="text-2xl font-bold text-gray-900">Vérifiez votre adresse e-mail</h1>
+	<h1 class="text-2xl font-bold text-gray-900">{m.email_not_verified_title()}</h1>
 	<p class="mt-3 text-gray-500">
-		Un lien de confirmation vous a été envoyé. Cliquez dessus pour activer votre compte, puis
-		reconnectez-vous.
+		{m.email_not_verified_body()}
 	</p>
 
 	<div class="mt-8">
+		<!-- eslint-disable svelte/no-navigation-without-resolve -->
 		<a
-			href="/auth/login"
+			href={loginUrl('/')}
 			class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
 		>
-			Se connecter
+			{m.email_not_verified_login()}
 		</a>
+		<!-- eslint-enable svelte/no-navigation-without-resolve -->
 	</div>
 </div>

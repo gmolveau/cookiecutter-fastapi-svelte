@@ -4,7 +4,13 @@ set dotenv-load := true
 default:
     @just --list
 
-build:
+paraglide:
+    pnpm exec paraglide-js compile --project ./project.inlang --outdir ./src/lib/paraglide
+
+paraglide-watch:
+    pnpm exec paraglide-js compile --project ./project.inlang --outdir ./src/lib/paraglide --watch
+
+build: paraglide
     pnpm run build
 
 install-prod:

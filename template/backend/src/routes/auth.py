@@ -51,7 +51,9 @@ async def login_endpoint(
     if next_url and is_next_url_valid(next_url):
         request.session["next_url"] = next_url
 
-    return await oauth.keycloak.authorize_redirect(request, redirect_uri, nonce=nonce, prompt="login")
+    return await oauth.keycloak.authorize_redirect(
+        request, redirect_uri, nonce=nonce, prompt="login"
+    )
 
 
 @router.get("/authorize", name="authorize_endpoint")

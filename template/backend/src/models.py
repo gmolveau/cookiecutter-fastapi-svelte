@@ -86,3 +86,25 @@ class User(BaseModel):
     groups: Mapped[list["Group"]] = relationship(
         "Group", secondary=user_groups, back_populates="users"
     )
+    api_keys: Mapped[list["ApiKey"]] = relationship(
+        "ApiKey", back_populates="user", cascade="all, delete-orphan"
+    )
+
+
+class ApiKey(BaseModel):
+    """A user-generated API key for programmatic access."""
+
+    __tablename__ = "api_keys"
+
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    key_prefix: Mapped[str] = mapped_column(String(32), nullable=False)
+    key_hash: Mapped[str] = mapped_column(
+        String(64), nullable=False, unique=True, index=True
+    )
+    expires_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    last_used_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+
+    user: Mapped["User"] = relationship("User", back_populates="api_keys")

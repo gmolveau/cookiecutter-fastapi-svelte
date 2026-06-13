@@ -4,26 +4,33 @@
 	import AppHeader from '$lib/components/AppHeader.svelte';
 	import { auth } from '$lib/stores/auth.svelte';
 	import { flash } from '$lib/stores/flash.svelte';
+	import { theme } from '$lib/stores/theme.svelte';
+	import * as m from '$lib/paraglide/messages';
 	import { onMount } from 'svelte';
 
 	let { children } = $props();
 
-	onMount(() => auth.init());
+	onMount(() => {
+		auth.init();
+		theme.init();
+	});
 </script>
 
 <svelte:head><link rel="icon" href={favicon} /></svelte:head>
 
-<div class="flex min-h-screen flex-col bg-gray-50">
+<div class="flex min-h-screen flex-col bg-gray-50 dark:bg-gray-900">
 	<AppHeader />
 	{#if flash.message}
 		<div
-			class="border-b border-yellow-200 bg-yellow-50 px-4 py-3 text-center text-sm text-yellow-800"
+			class="border-b border-yellow-200 bg-yellow-50 px-4 py-3 text-center text-sm text-yellow-800 dark:border-yellow-900 dark:bg-yellow-950 dark:text-yellow-200"
 		>
 			{flash.message}
-			<button onclick={() => flash.clear()} class="ml-3 font-medium underline">Dismiss</button>
+			<button onclick={() => flash.clear()} class="ml-3 font-medium underline"
+				>{m.common_dismiss()}</button
+			>
 		</div>
 	{/if}
-	<main class="mx-auto w-full max-w-4xl flex-1 px-4 py-12">
+	<main class="mx-auto w-full max-w-6xl flex-1 px-4 py-12">
 		{@render children()}
 	</main>
 </div>

@@ -22,6 +22,7 @@ from src.database import database_engine
 from src.limiter import limiter
 from src.logging_setup import setup_logging
 from src.otel_setup import setup_otel
+from src.routes.api_keys import router as api_keys_router
 from src.routes.auth import router as auth_router
 from src.routes.health import router as health_router
 from src.storage import active_disk
@@ -110,6 +111,7 @@ def create_app() -> FastAPI:
     api_router = APIRouter(prefix="/api")
     api_router.include_router(router=auth_router)
     api_router.include_router(router=health_router)
+    api_router.include_router(router=api_keys_router)
     app.include_router(api_router)
 
     return app
