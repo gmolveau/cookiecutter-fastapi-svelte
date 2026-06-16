@@ -8,7 +8,7 @@ from starlette.requests import Request
 
 from src.database import get_db
 from src.models import User
-from src.services.api_keys import authenticate_api_key
+from src.services.authentication import NotAuthenticated, resolve_user
 from src.services.users import get_effective_role
 from src.storage import get_disk
 from src.storage.disk import StorageDisk
@@ -25,17 +25,13 @@ def get_current_user_from_session(
 ) -> User:
     """Return the logged-in User ORM object, or raise 401 if not authenticated."""
     session_user = request.session.get("user")
-    if not session_user:
-        raise HTTPException(status_code=401, detail="Not authenticated")
-    sub = session_user.get("sub")
-    if not sub:
-        request.session.clear()
-        raise HTTPException(status_code=401, detail="Not authenticated")
-    user = db.query(User).filter(User.sub == sub).first()
-    if user is None:
-        request.session.clear()
-        raise HTTPException(status_code=401, detail="Not authenticated")
-    return user
+    session_sub = session_user.get("sub") if session_user else None
+    try:
+        return resolve_user(db, bearer_token=None, session_sub=session_sub)
+    except NotAuthenticated:
+        if session_user:
+            request.session.clear()
+        raise HTTPException(status_code=401, detail="Not authenticated") from None
 
 
 SessionUserDep = Annotated[User, Depends(get_current_user_from_session)]
@@ -47,12 +43,15 @@ def get_current_user(request: Request, db: Session = Depends(get_db)) -> User:
     Raise 401 if neither yields an authenticated user.
     """
     scheme, _, token = request.headers.get("Authorization", "").partition(" ")
-    if scheme.lower() == "bearer" and token:
-        user = authenticate_api_key(db, token)
-        if user is None:
-            raise HTTPException(status_code=401, detail="Not authenticated")
-        return user
-    return get_current_user_from_session(request, db)
+    bearer_token = token if scheme.lower() == "bearer" and token else None
+    session_user = request.session.get("user")
+    session_sub = session_user.get("sub") if session_user else None
+    try:
+        return resolve_user(db, bearer_token=bearer_token, session_sub=session_sub)
+    except NotAuthenticated:
+        if bearer_token is None and session_user:
+            request.session.clear()
+        raise HTTPException(status_code=401, detail="Not authenticated") from None
 
 
 CurrentUserDep = Annotated[User, Depends(get_current_user)]

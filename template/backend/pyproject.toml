@@ -1,7 +1,7 @@
 [project]
-name = "[[ python_package_name ]]"
+name = "[[ project_slug ]]"
 version = "0.1.0"
-description = "[[ description ]]"
+description = "[[ project_name ]]"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
@@ -21,7 +21,13 @@ dependencies = [
 ]
 
 [dependency-groups]
-dev = ["bandit>=1.9.3", "ruff>=0.15.1", "ty>=0.0.17"]
+dev = [
+    "bandit>=1.9.3",
+    "pytest>=9.1.0",
+    "pytest-cov>=7.1.0",
+    "ruff>=0.15.1",
+    "ty>=0.0.17",
+]
 
 [tool.ruff]
 lint.select = [
@@ -42,3 +48,7 @@ lint.select = [
 [tool.ty.src]
 include = ["src", "tests"]
 exclude = [".venv"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]

@@ -1,15 +1,14 @@
 """SQLite database engine and session factory."""
 
-import os
 from typing import Generator
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 
-_db_path = os.environ.get("DATABASE_URL", "sqlite:///./data/sqlite.db")
+from src.config import get_settings
 
 database_engine = create_engine(
-    _db_path,
+    get_settings().DATABASE_URL,
     connect_args={"check_same_thread": False},
 )
 

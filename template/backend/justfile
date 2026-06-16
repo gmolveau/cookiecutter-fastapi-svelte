@@ -28,6 +28,12 @@ new-migrate name:
 migrate:
     uv run alembic -c src/migrations/alembic.ini upgrade head
 
+test:
+    uv run pytest
+
+test-cov:
+    uv run pytest --cov=src --cov-report=term-missing
+
 ruff:
     uv run ruff format .
     uv run ruff check . --fix

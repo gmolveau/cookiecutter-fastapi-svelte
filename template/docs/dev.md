@@ -2,7 +2,7 @@
 
 ## The app
 
-[[ project_name ]] — [[ description ]]
+[[ project_name ]] — [[ project_name ]]
 
 A fullstack web application with a FastAPI backend and SvelteKit frontend. Authentication is handled via Keycloak (OIDC).
 
@@ -17,7 +17,8 @@ A fullstack web application with a FastAPI backend and SvelteKit frontend. Authe
 ├── keycloak/         # Keycloak realm export for local dev
 ├── docs/             # This documentation
 │   ├── dev.md        # ← you are here
-│   └── env.md        # All environment variables and defaults
+│   ├── env.md        # All environment variables and defaults
+│   └── adr/          # Architecture decision records
 ├── compose.yml            # Docker Compose dev stack
 ├── compose.localprod.yml  # Docker Compose local-prod stack
 ├── justfile               # Top-level convenience targets

@@ -1,6 +1,5 @@
 """FastAPI application factory."""
 
-import os
 import uuid
 from contextlib import asynccontextmanager
 
@@ -69,18 +68,17 @@ def create_app() -> FastAPI:
         max_age=settings.SESSION_COOKIE_MAX_AGE,
     )
 
-    allowed_hosts: list[str] = os.environ["ALLOWED_HOSTS"].split(sep=",")
     app.add_middleware(
-        middleware_class=TrustedHostMiddleware, allowed_hosts=allowed_hosts
+        middleware_class=TrustedHostMiddleware,
+        allowed_hosts=settings.ALLOWED_HOSTS,
     )
 
     # Must be outermost: patches request scheme from X-Forwarded-Proto (set by Traefik)
     app.add_middleware(ProxyHeadersMiddleware, trusted_hosts="*")
 
-    allowed_origins: list[str] = os.environ["ALLOWED_ORIGINS"].split(sep=",")
     app.add_middleware(
         middleware_class=CORSMiddleware,
-        allow_origins=allowed_origins,
+        allow_origins=settings.ALLOWED_ORIGINS,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],

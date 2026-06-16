@@ -10,7 +10,7 @@ from starlette.requests import Request
 from starlette.responses import JSONResponse
 
 from src.config import get_settings
-from src.dependencies import SessionDep
+from src.dependencies import SessionDep, SessionUserDep
 from src.services.users import get_effective_role, upsert_user
 
 logger = structlog.get_logger(__name__)
@@ -71,16 +71,10 @@ async def authorize_endpoint(request: Request, db: SessionDep):
     email: str = data["email"]
     group_names: list[str] = data.get("groups", [])
 
-    user = upsert_user(db, sub=sub, name=name, email=email, group_names=group_names)
+    upsert_user(db, sub=sub, name=name, email=email, group_names=group_names)
     logger.info("user.login", sub=sub, name=name, email=email)
 
-    request.session["user"] = {
-        "sub": sub,
-        "name": name,
-        "email": email,
-        "groups": group_names,
-        "role": get_effective_role(user),
-    }
+    request.session["user"] = {"sub": sub}
 
     next_url = request.session.pop("next_url", "/")
     response = RedirectResponse(url=next_url)
@@ -110,11 +104,5 @@ def logout(request: Request) -> JSONResponse:
 
 
 @router.get("/me")
-def me(request: Request):
-    user = request.session.get("user")
-    if not user:
-        raise HTTPException(status_code=401, detail="Not authenticated")
-    return {
-        "name": user["name"],
-        "role": user.get("role"),
-    }
+def me(user: SessionUserDep):
+    return {"name": user.name, "role": get_effective_role(user)}

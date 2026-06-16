@@ -3,36 +3,43 @@
 Environment variables
 ---------------------
 STORAGE_DRIVER              ``local`` or ``s3``          default: local
-STORAGE_LOCAL_PATH          root dir for local disk       required
+STORAGE_LOCAL_PATH          root dir for local disk       required when driver=local
 STORAGE_S3_BUCKET            bucket name                   required when driver=s3
-STORAGE_S3_REGION            region
-STORAGE_S3_PREFIX            key prefix inside bucket
+STORAGE_S3_REGION            region                        required when driver=s3
+STORAGE_S3_PREFIX            key prefix inside bucket      optional
 STORAGE_S3_ENDPOINT_URL      custom endpoint (MinIO, R2…)  optional (omit for AWS)
 STORAGE_S3_ACCESS_KEY_ID     explicit credentials          optional
 STORAGE_S3_SECRET_ACCESS_KEY explicit credentials          optional
 """
 
-import os
-
+from src.config import get_settings
 from src.storage.disk import StorageDisk
 from src.storage.local import LocalDisk
 from src.storage.s3 import S3Disk
 
-_disk_type = os.environ.get("STORAGE_DRIVER", "local").lower()
+settings = get_settings()
 
-if _disk_type == "s3":
-    _bucket = os.environ["STORAGE_S3_BUCKET"]
+if settings.STORAGE_DRIVER.lower() == "s3":
+    bucket = settings.STORAGE_S3_BUCKET
+    region = settings.STORAGE_S3_REGION
+    if bucket is None or region is None:
+        raise RuntimeError(
+            "S3 storage requires STORAGE_S3_BUCKET and STORAGE_S3_REGION"
+        )
     active_disk: StorageDisk = S3Disk(
-        bucket=_bucket,
-        region=os.environ["STORAGE_S3_REGION"],
-        prefix=os.environ["STORAGE_S3_PREFIX"],
-        endpoint_url=os.environ["STORAGE_S3_ENDPOINT_URL"],
-        access_key=os.environ["STORAGE_S3_ACCESS_KEY_ID"],
-        secret_key=os.environ["STORAGE_S3_SECRET_ACCESS_KEY"],
+        bucket=bucket,
+        region=region,
+        prefix=settings.STORAGE_S3_PREFIX,
+        endpoint_url=settings.STORAGE_S3_ENDPOINT_URL,
+        access_key=settings.STORAGE_S3_ACCESS_KEY_ID,
+        secret_key=settings.STORAGE_S3_SECRET_ACCESS_KEY,
     )
 else:
+    local_path = settings.STORAGE_LOCAL_PATH
+    if local_path is None:
+        raise RuntimeError("Local storage requires STORAGE_LOCAL_PATH")
     active_disk = LocalDisk(
-        root=os.environ["STORAGE_LOCAL_PATH"],
+        root=local_path,
         base_url="/api/files",
     )
 
