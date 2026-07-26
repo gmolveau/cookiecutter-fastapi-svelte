@@ -1,0 +1,11 @@
+__pycache__
+.pytest_cache
+.venv/
+.coverage
+coverage.xml
+.report/
+.ruff_cache/
+!data/.gitignore
+data/
+!static/.gitignore
+static/

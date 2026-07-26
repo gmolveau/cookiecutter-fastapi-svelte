@@ -1,0 +1,9 @@
+# Changes here will be overwritten by Copier
+_commit: 886f5b466bd7
+_src_path: gh:gmolveau/cookiecutter-fastapi-svelte
+author_name: MyName
+description: MyApp
+github_username: myname
+project_name: MyApp
+project_slug: myapp
+python_package_name: myapp

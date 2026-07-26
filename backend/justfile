@@ -1,0 +1,66 @@
+set shell := ["bash", "-euo", "pipefail", "-c"]
+set dotenv-load
+
+default:
+    @just --list
+
+install:
+    uv sync --frozen
+
+install-dev:
+    uv sync --frozen --dev
+
+upgrade:
+    uv sync --upgrade
+
+create-volumes:
+    mkdir -p data
+
+run-dev:
+    uv run uvicorn src.web:app --reload --host 0.0.0.0 --port=8000
+
+run-prod:
+    uv run uvicorn src.web:app --host 0.0.0.0 --port=8000 --workers $(python3 -c "import os; print(os.cpu_count() * 2 + 1)")
+
+new-migrate name:
+    uv run alembic -c src/migrations/alembic.ini revision --autogenerate -m {{ name }}
+
+migrate:
+    uv run alembic -c src/migrations/alembic.ini upgrade head
+
+test:
+    uv run pytest
+
+test-cov:
+    uv run pytest --cov=src --cov-report=term-missing
+
+ruff:
+    uv run ruff format .
+    uv run ruff check . --fix
+
+ruff-check:
+    uv run ruff check src
+    uv run ruff format --check src
+
+ty:
+    uv run ty check
+
+bandit:
+    uv run bandit --silent -c pyproject.toml -r src
+
+alembic-check:
+    uv run alembic -c src/migrations/alembic.ini check
+
+checks: ty ruff-check bandit
+
+format: ruff
+
+clean:
+    rm -rf .venv
+    find . -type f -name '*.pyc' -delete
+    find . -type d -name '__pycache__' -delete
+    find . -type d -name '.ty_cache ' -delete
+    find . -type d -name '.pytest_cache ' -delete
+    find . -type d -name '.ruff_cache' -delete
+    rm -f coverage coverage.xml
+    rm -rf .report
