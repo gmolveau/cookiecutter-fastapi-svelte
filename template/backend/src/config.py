@@ -80,7 +80,7 @@ class Settings(BaseSettings):
 @lru_cache
 def get_settings() -> Settings:
     try:
-        return Settings()  # ty:ignore[missing-argument]
+        return Settings()
     except ValidationError as e:
         missing = [err["loc"][0] for err in e.errors() if err["type"] == "missing"]
         if missing:
